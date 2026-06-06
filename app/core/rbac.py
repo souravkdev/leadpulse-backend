@@ -1,0 +1,56 @@
+from fastapi import HTTPException, status
+
+from app.models.user import UserRole
+
+
+# Role hierarchy — higher index = more privilege
+ROLE_HIERARCHY = [
+    UserRole.viewer,
+    UserRole.sales_agent,
+    UserRole.sales_manager,
+    UserRole.admin,
+]
+
+
+def has_role(user_role: UserRole, required_role: UserRole) -> bool:
+    """Return True if user_role is >= required_role in hierarchy."""
+    try:
+        return ROLE_HIERARCHY.index(user_role) >= ROLE_HIERARCHY.index(required_role)
+    except ValueError:
+        return False
+
+
+def require_roles(*allowed_roles: UserRole):
+    """
+    Returns a FastAPI dependency that raises 403 if the current user's
+    role is not in the allowed_roles list.
+
+    Usage:
+        @router.get("/admin-only", dependencies=[Depends(require_roles(UserRole.admin))])
+    """
+    from fastapi import Depends
+    from app.api.deps import get_current_active_user
+    from app.models.user import User
+
+    def _check(current_user: User = Depends(get_current_active_user)) -> User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action.",
+            )
+        return current_user
+
+    return Depends(_check)
+
+
+def can_manage_lead(actor_role: UserRole, actor_id: str, lead_owner_id: str) -> bool:
+    """
+    Admin/Sales Manager can manage any lead.
+    Sales Agent can only manage their own leads.
+    Viewer cannot manage leads.
+    """
+    if actor_role in (UserRole.admin, UserRole.sales_manager):
+        return True
+    if actor_role == UserRole.sales_agent and actor_id == lead_owner_id:
+        return True
+    return False
