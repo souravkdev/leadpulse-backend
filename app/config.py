@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
+    # Keep SQLite as safe local fallback when DATABASE_URL is not provided.
+    # Recommended runtime value is PostgreSQL via .env.
     DATABASE_URL: str = "sqlite:///./leadpulse.db"
 
     # JWT

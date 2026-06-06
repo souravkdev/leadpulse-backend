@@ -572,13 +572,23 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env — change SECRET_KEY, FIRST_ADMIN_PASSWORD for production
 
-# 5. Apply database migrations
-alembic upgrade head
-# This creates leadpulse.db (SQLite) and all tables
+# 5. Start local PostgreSQL (recommended)
+docker compose -f docker-compose.postgres.yml up -d
 
-# 6. Start the development server
+# 6. Apply database migrations
+alembic upgrade head
+
+# 7. Optional: migrate existing local SQLite data
+python scripts/migrate_sqlite_to_postgres.py --postgres-url postgresql+psycopg2://postgres:postgres@localhost:5432/leadpulse
+
+# 8. Verify row counts after migration
+python scripts/verify_migration_counts.py --postgres-url postgresql+psycopg2://postgres:postgres@localhost:5432/leadpulse
+
+# 9. Start the development server
 uvicorn app.main:app --reload --port 8000
 ```
+
+SQLite fallback remains available by setting DATABASE_URL=sqlite:///./leadpulse.db in .env.
 
 **On first startup**, the admin user is auto-seeded:
 - Email: `admin@leadpulse.com`

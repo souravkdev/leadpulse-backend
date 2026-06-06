@@ -7,14 +7,14 @@ from app.api.v1.router import router as api_router
 from app.config import get_settings
 from app.database import engine, Base
 from app.core.security import hash_password
+from sqlalchemy.orm import Session
+from app.models.user import User, UserRole
 
 settings = get_settings()
 
 
 def _seed_admin() -> None:
     """Create the first admin user if no users exist."""
-    from sqlalchemy.orm import Session
-    from app.models.user import User, UserRole
 
     with Session(engine) as db:
         if db.query(User).count() == 0:
