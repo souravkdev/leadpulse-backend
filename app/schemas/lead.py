@@ -28,6 +28,7 @@ class LeadUpdate(BaseModel):
     contact_name: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
+    stage: LeadStage | None = None
     priority: LeadPriority | None = None
     source: LeadSource | None = None
     value: Decimal | None = None

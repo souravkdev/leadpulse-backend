@@ -43,14 +43,21 @@ def require_roles(*allowed_roles: UserRole):
     return Depends(_check)
 
 
-def can_manage_lead(actor_role: UserRole, actor_id: str, lead_owner_id: str) -> bool:
+def can_manage_lead(
+    actor_role: UserRole,
+    actor_id: str,
+    lead_created_by_id: str,
+    lead_assigned_to_id: str | None = None,
+) -> bool:
     """
     Admin/Sales Manager can manage any lead.
-    Sales Agent can only manage their own leads.
+    Sales Agent can manage leads they created or are assigned to.
     Viewer cannot manage leads.
     """
     if actor_role in (UserRole.admin, UserRole.sales_manager):
         return True
-    if actor_role == UserRole.sales_agent and actor_id == lead_owner_id:
+    if actor_role == UserRole.sales_agent and (
+        actor_id == lead_created_by_id or actor_id == lead_assigned_to_id
+    ):
         return True
     return False
