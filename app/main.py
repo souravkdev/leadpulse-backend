@@ -29,6 +29,24 @@ def _seed_admin() -> None:
             print(f"[seed] Admin user created → {settings.FIRST_ADMIN_EMAIL}")
 
 
+def _seed_attendance_defaults() -> None:
+    from decimal import Decimal
+    from app.models.attendance import AttendanceSettings, LeavePolicy, LeaveType
+    from app.services.attendance_service import ensure_attendance_settings
+
+    with Session(engine) as db:
+        ensure_attendance_settings(db)
+        defaults = [
+            (LeaveType.paid, Decimal("1.0")),
+            (LeaveType.sick, Decimal("1.0")),
+        ]
+        for leave_type, accrual in defaults:
+            if not db.query(LeavePolicy).filter(LeavePolicy.leave_type == leave_type).first():
+                db.add(LeavePolicy(leave_type=leave_type, accrual_per_month=accrual))
+        db.commit()
+        print("[seed] Attendance defaults ensured")
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     import app.models  # noqa: F401
@@ -39,8 +57,9 @@ async def lifespan(_app: FastAPI):
 
     try:
         _seed_admin()
+        _seed_attendance_defaults()
     except Exception as exc:
-        print(f"[seed] Skipped admin seed: {exc}")
+        print(f"[seed] Skipped startup seed: {exc}")
 
     yield
 

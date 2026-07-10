@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     FIRST_ADMIN_PASSWORD: str = "Admin@123"
     FIRST_ADMIN_NAME: str = "System Admin"
 
+    # Attendance
+    COMPANY_TIMEZONE: str = "Asia/Kolkata"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @property

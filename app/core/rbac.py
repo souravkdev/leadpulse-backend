@@ -61,3 +61,23 @@ def can_manage_lead(
     ):
         return True
     return False
+
+
+def can_use_attendance(role: UserRole) -> bool:
+    return role != UserRole.viewer
+
+
+def can_manage_attendance_admin(role: UserRole) -> bool:
+    return role == UserRole.admin
+
+
+def can_approve_leave(
+    actor_role: UserRole,
+    actor_id: str,
+    applicant_manager_id: str | None,
+) -> bool:
+    if actor_role == UserRole.admin:
+        return True
+    if actor_role == UserRole.sales_manager and applicant_manager_id == actor_id:
+        return True
+    return False

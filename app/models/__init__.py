@@ -1,6 +1,24 @@
 from app.models.user import User, UserRole
 from app.models.lead import Lead, LeadStage, LeadPriority, LeadSource
 from app.models.activity import Activity, ActivityType
+from app.models.attendance import (
+    AttendanceSettings,
+    UserAttendanceProfile,
+    ShiftTemplate,
+    ShiftAssignment,
+    AttendanceSession,
+    AttendanceSessionStatus,
+    BreakRecord,
+    BreakType,
+    AttendanceCorrection,
+    CorrectionStatus,
+    LeavePolicy,
+    LeaveBalance,
+    LeaveApplication,
+    LeaveType,
+    LeaveStatus,
+    HalfDayPeriod,
+)
 
 __all__ = [
     "User",
@@ -11,4 +29,20 @@ __all__ = [
     "LeadSource",
     "Activity",
     "ActivityType",
+    "AttendanceSettings",
+    "UserAttendanceProfile",
+    "ShiftTemplate",
+    "ShiftAssignment",
+    "AttendanceSession",
+    "AttendanceSessionStatus",
+    "BreakRecord",
+    "BreakType",
+    "AttendanceCorrection",
+    "CorrectionStatus",
+    "LeavePolicy",
+    "LeaveBalance",
+    "LeaveApplication",
+    "LeaveType",
+    "LeaveStatus",
+    "HalfDayPeriod",
 ]
