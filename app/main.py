@@ -7,14 +7,14 @@ from app.api.v1.router import router as api_router
 from app.config import get_settings
 from app.database import engine, Base
 from app.core.security import hash_password
+from sqlalchemy.orm import Session
+from app.models.user import User, UserRole
 
 settings = get_settings()
 
 
 def _seed_admin() -> None:
     """Create the first admin user if no users exist."""
-    from sqlalchemy.orm import Session
-    from app.models.user import User, UserRole
 
     with Session(engine) as db:
         if db.query(User).count() == 0:
@@ -29,12 +29,38 @@ def _seed_admin() -> None:
             print(f"[seed] Admin user created → {settings.FIRST_ADMIN_EMAIL}")
 
 
+def _seed_attendance_defaults() -> None:
+    from decimal import Decimal
+    from app.models.attendance import AttendanceSettings, LeavePolicy, LeaveType
+    from app.services.attendance_service import ensure_attendance_settings
+
+    with Session(engine) as db:
+        ensure_attendance_settings(db)
+        defaults = [
+            (LeaveType.paid, Decimal("1.0")),
+            (LeaveType.sick, Decimal("1.0")),
+        ]
+        for leave_type, accrual in defaults:
+            if not db.query(LeavePolicy).filter(LeavePolicy.leave_type == leave_type).first():
+                db.add(LeavePolicy(leave_type=leave_type, accrual_per_month=accrual))
+        db.commit()
+        print("[seed] Attendance defaults ensured")
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Import all models so SQLAlchemy knows about them before create_all
     import app.models  # noqa: F401
-    Base.metadata.create_all(bind=engine)
-    _seed_admin()
+
+    # SQLite local dev only — PostgreSQL schema is managed by Alembic migrations.
+    if settings.DATABASE_URL.startswith("sqlite"):
+        Base.metadata.create_all(bind=engine)
+
+    try:
+        _seed_admin()
+        _seed_attendance_defaults()
+    except Exception as exc:
+        print(f"[seed] Skipped startup seed: {exc}")
+
     yield
 
 

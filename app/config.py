@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
+    # Keep SQLite as safe local fallback when DATABASE_URL is not provided.
+    # Recommended runtime value is PostgreSQL via .env.
     DATABASE_URL: str = "sqlite:///./leadpulse.db"
 
     # JWT
@@ -24,6 +26,9 @@ class Settings(BaseSettings):
     FIRST_ADMIN_EMAIL: str = "admin@leadpulse.com"
     FIRST_ADMIN_PASSWORD: str = "Admin@123"
     FIRST_ADMIN_NAME: str = "System Admin"
+
+    # Attendance
+    COMPANY_TIMEZONE: str = "Asia/Kolkata"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

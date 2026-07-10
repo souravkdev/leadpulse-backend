@@ -7,7 +7,7 @@ Backend API service for LeadPulse CRM, built with FastAPI, SQLAlchemy, and JWT a
 - FastAPI 0.115.5
 - SQLAlchemy 2.0
 - Alembic (migrations)
-- SQLite (default dev database)
+- PostgreSQL (primary) with SQLite fallback
 - JWT auth with python-jose
 - Password hashing with bcrypt
 
@@ -34,6 +34,24 @@ Backend API service for LeadPulse CRM, built with FastAPI, SQLAlchemy, and JWT a
 
 - Python 3.11+
 - pip
+- Docker Desktop or Docker Engine (for PostgreSQL container)
+
+## Docker Setup (Optional)
+
+If you want to run PostgreSQL in a container instead of using a local installation:
+
+1) Start the PostgreSQL container:
+- docker compose -f docker-compose.postgres.yml up -d
+
+2) Verify the container is running:
+- docker ps
+
+You should see `leadpulse-postgres` in the list.
+
+3) Stop the container when done:
+- docker compose -f docker-compose.postgres.yml down
+
+For more details, see the Docker Compose file: `docker-compose.postgres.yml`
 
 ## Quick Start
 
@@ -50,7 +68,13 @@ Backend API service for LeadPulse CRM, built with FastAPI, SQLAlchemy, and JWT a
 4) Configure environment
 - cp .env.example .env
 
-5) Run server
+5) Start PostgreSQL (recommended)
+- docker compose -f docker-compose.postgres.yml up -d
+
+6) Run migrations
+- alembic upgrade head
+
+7) Run server
 - uvicorn app.main:app --reload --port 8000
 
 API will run at:
@@ -91,12 +115,47 @@ Configured in .env (see .env.example):
 
 ## Database Notes
 
-Default dev database is SQLite:
+Recommended database is PostgreSQL:
+- DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/leadpulse
+
+Optional SQLite fallback:
 - DATABASE_URL=sqlite:///./leadpulse.db
 
 The app creates tables at startup and seeds the first admin if users table is empty.
 
 For production, use PostgreSQL and run migrations via Alembic.
+
+## Migrate Existing SQLite Data to PostgreSQL
+
+1) Ensure PostgreSQL is running and schema is ready:
+- docker compose -f docker-compose.postgres.yml up -d
+- alembic upgrade head
+
+If Docker is not installed, you can use a local PostgreSQL service instead:
+- brew services start postgresql@15
+- createdb leadpulse
+- DATABASE_URL=postgresql+psycopg2://$USER@localhost:5432/leadpulse alembic upgrade head
+
+2) Run one-time migration script:
+- python scripts/migrate_sqlite_to_postgres.py --postgres-url postgresql+psycopg2://postgres:postgres@localhost:5432/leadpulse
+
+3) Optional clean import (truncate target first):
+- python scripts/migrate_sqlite_to_postgres.py --postgres-url postgresql+psycopg2://postgres:postgres@localhost:5432/leadpulse --truncate-target
+
+4) Verify migration row counts:
+- python scripts/verify_migration_counts.py --postgres-url postgresql+psycopg2://postgres:postgres@localhost:5432/leadpulse
+
+The verification script exits with status code 1 if any table count mismatches.
+
+## Seed Demo Leads (Development Only)
+
+The demo seeding script is intentionally restricted to development usage.
+
+- Requires explicit confirmation flag: `--dev-only-confirm`
+- Refuses to run against non-local databases (only sqlite/localhost/127.0.0.1/::1)
+
+Example:
+- `DATABASE_URL=postgresql+psycopg2://$USER@localhost:5432/leadpulse python scripts/seed_demo_leads.py --dev-only-confirm`
 
 ## API Base Path
 

@@ -102,7 +102,9 @@ def get_lead(
     )
     if not lead:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found.")
-    if not can_manage_lead(current_user.role, current_user.id, lead.created_by_id):
+    if not can_manage_lead(
+        current_user.role, current_user.id, lead.created_by_id, lead.assigned_to_id
+    ):
         if current_user.role == UserRole.viewer:
             pass  # viewers can read any lead
         else:
@@ -120,7 +122,9 @@ def update_lead(
     lead = db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found.")
-    if not can_manage_lead(current_user.role, current_user.id, lead.created_by_id):
+    if not can_manage_lead(
+        current_user.role, current_user.id, lead.created_by_id, lead.assigned_to_id
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
     for field, value in payload.model_dump(exclude_unset=True).items():
@@ -142,7 +146,9 @@ def update_lead_stage(
     lead = db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found.")
-    if not can_manage_lead(current_user.role, current_user.id, lead.created_by_id):
+    if not can_manage_lead(
+        current_user.role, current_user.id, lead.created_by_id, lead.assigned_to_id
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
     lead.stage = payload.stage
