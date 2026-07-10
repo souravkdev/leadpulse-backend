@@ -31,10 +31,17 @@ def _seed_admin() -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Import all models so SQLAlchemy knows about them before create_all
     import app.models  # noqa: F401
-    Base.metadata.create_all(bind=engine)
-    _seed_admin()
+
+    # SQLite local dev only — PostgreSQL schema is managed by Alembic migrations.
+    if settings.DATABASE_URL.startswith("sqlite"):
+        Base.metadata.create_all(bind=engine)
+
+    try:
+        _seed_admin()
+    except Exception as exc:
+        print(f"[seed] Skipped admin seed: {exc}")
+
     yield
 
 

@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
+from sqlalchemy.pool import NullPool
 
 from app.config import get_settings
 
@@ -7,13 +8,18 @@ settings = get_settings()
 is_sqlite = settings.DATABASE_URL.startswith("sqlite")
 
 connect_args = {}
+engine_kwargs: dict = {"echo": settings.DEBUG}
+
 if is_sqlite:
     connect_args = {"check_same_thread": False}
+else:
+    # Serverless-friendly: no persistent connection pool (Vercel/Neon).
+    engine_kwargs["poolclass"] = NullPool
 
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=connect_args,
-    echo=settings.DEBUG,
+    **engine_kwargs,
 )
 
 # Enable WAL mode for SQLite to allow concurrent reads during writes
